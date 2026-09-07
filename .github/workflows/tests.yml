@@ -16,10 +16,10 @@ jobs:
       matrix:
         include:
           - php: '8.2'
-            laravel: '11'
-            testbench: '^9.0'
-            dependencies: highest
-            composer_options: '--prefer-dist'
+            laravel: '12'
+            testbench: '^10.0'
+            dependencies: lowest
+            composer_options: '--prefer-lowest'
           - php: '8.3'
             laravel: '12'
             testbench: '^10.0'
@@ -30,12 +30,6 @@ jobs:
             testbench: '^11.0'
             dependencies: highest
             composer_options: '--prefer-dist'
-          - php: '8.2'
-            laravel: '11'
-            testbench: '^9.0'
-            dependencies: lowest
-            composer_options: '--prefer-lowest'
-
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -54,6 +48,18 @@ jobs:
 
       - name: Run tests
         run: composer test
+
+  compatibility-gate:
+    name: Compatibility
+    runs-on: ubuntu-latest
+    needs: compatibility
+    if: ${{ always() }}
+
+    steps:
+      - name: Confirm compatibility matrix
+        env:
+          COMPATIBILITY_RESULT: ${{ needs.compatibility.result }}
+        run: test "$COMPATIBILITY_RESULT" = success
 
   quality:
     name: Quality
