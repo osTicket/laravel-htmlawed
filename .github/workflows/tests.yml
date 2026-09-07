@@ -1,0 +1,82 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  compatibility:
+    name: PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }} / ${{ matrix.dependencies }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - php: '8.2'
+            laravel: '11'
+            testbench: '^9.0'
+            dependencies: highest
+            composer_options: '--prefer-dist'
+          - php: '8.3'
+            laravel: '12'
+            testbench: '^10.0'
+            dependencies: highest
+            composer_options: '--prefer-dist'
+          - php: '8.4'
+            laravel: '13'
+            testbench: '^11.0'
+            dependencies: highest
+            composer_options: '--prefer-dist'
+          - php: '8.2'
+            laravel: '11'
+            testbench: '^9.0'
+            dependencies: lowest
+            composer_options: '--prefer-lowest'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@b604ade2a87db23f8871b7182e69ec5e75effb45 # v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+
+      - name: Select Laravel compatibility target
+        run: composer require --dev orchestra/testbench:${{ matrix.testbench }} --no-update
+
+      - name: Install dependencies
+        run: composer update ${{ matrix.composer_options }} --no-interaction --no-progress
+
+      - name: Run tests
+        run: composer test
+
+  quality:
+    name: Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@b604ade2a87db23f8871b7182e69ec5e75effb45 # v2
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      - name: Install dependencies
+        run: composer update --prefer-dist --no-interaction --no-progress
+
+      - name: Check formatting
+        run: composer format:check
+
+      - name: Run static analysis
+        run: composer phpstan
+
+      - name: Audit dependencies
+        run: composer audit
