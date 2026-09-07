@@ -1,0 +1,11 @@
+<?php
+
+/**
+ * @param  array<string,mixed>  $configuration
+ * @param  array<string,mixed>|string  $specification
+ */
+function htmLawed(
+    string $html,
+    array $configuration = [],
+    array|string $specification = []
+): string {}
